@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bicycle Management System</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-title">
+        <span class="brand-icon">🚲</span>
+        <div>
+          <h1>Bicycle Management</h1>
+          <p>Browse, create, update, and manage bicycle inventory</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-refresh" class="btn btn-outline" title="Refresh List">
+          ↻ Refresh
+        </button>
+        <button id="btn-open-create" class="btn btn-primary" title="Add Bicycle">
+          + Add Bicycle
+        </button>
+      </div>
+    </header>
+
+    <!-- API Config Banner -->
+    <div class="config-card">
+      <div class="config-inputs">
+        <label for="api-base-input">API Endpoint:</label>
+        <input type="text" id="api-base-input" class="input" value="/api/bicycles" placeholder="/api/bicycles" />
+        <button id="btn-apply-api-base" class="btn btn-sm btn-outline">Apply</button>
+      </div>
+      <span class="text-xs text-muted">Supports relative URL or backend port (e.g. <code>/api/bicycles</code>)</span>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="error-banner" class="error-banner hidden" role="alert">
+      <div class="error-content">
+        <span id="error-code" class="font-mono"></span>
+        <span id="error-message"></span>
+      </div>
+      <button id="btn-close-error" class="btn btn-sm btn-ghost" title="Dismiss">&times;</button>
+    </div>
+
+    <!-- Main Card -->
+    <main class="main-card">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Search by name, brand, type, or ID..." aria-label="Search bicycles" />
+        </div>
+        <div class="toolbar-controls">
+          <label class="page-size-label">
+            Show
+            <select id="page-size-select" class="input" aria-label="Items per page">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+            items
+          </label>
+        </div>
+      </div>
+
+      <!-- Table Wrapper -->
+      <div class="table-wrapper">
+        <table class="bicycle-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Brand</th>
+              <th>Type</th>
+              <th>Price</th>
+              <th>Created At</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bicycle-table-body">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="state-box hidden">
+          <div class="spinner"></div>
+          <p class="state-title">Loading bicycles...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="state-box hidden">
+          <div class="state-icon">🚲</div>
+          <p class="state-title">No bicycles found</p>
+          <p class="text-muted text-xs">Create a new bicycle using the "Add Bicycle" button above.</p>
+        </div>
+      </div>
+
+      <!-- Pagination Bar -->
+      <footer class="pagination-bar" id="pagination-container">
+        <span id="total-info">Total: 0 items</span>
+        <div class="pagination-controls">
+          <button id="btn-prev-page" class="btn btn-sm btn-outline" disabled>&larr; Previous</button>
+          <span id="page-info" class="font-medium">Page 1 of 1</span>
+          <button id="btn-next-page" class="btn btn-sm btn-outline" disabled>Next &rarr;</button>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Create / Edit Bicycle Modal -->
+  <div id="form-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="form-modal-title">Add New Bicycle</h3>
+        <button id="btn-cancel-form-x" class="btn btn-sm btn-ghost" onclick="document.getElementById('btn-cancel-form').click()">&times;</button>
+      </div>
+      <form id="bicycle-form">
+        <div class="modal-body">
+          <div id="form-error-banner" class="error-banner hidden" style="margin-bottom: 12px; padding: 8px 12px;">
+            <span id="form-error-message" class="text-xs"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="input-name">Name <span style="color: var(--color-danger)">*</span></label>
+            <input type="text" id="input-name" class="input" required placeholder="e.g. Mountain Explorer Pro" />
+            <p class="form-hint">Non-empty bicycle model name</p>
+          </div>
+
+          <div class="form-group">
+            <label for="input-brand">Brand <span style="color: var(--color-danger)">*</span></label>
+            <input type="text" id="input-brand" class="input" required placeholder="e.g. Trek, Giant, Specialized" />
+          </div>
+
+          <div class="form-group">
+            <label for="input-type">Type <span style="color: var(--color-danger)">*</span></label>
+            <input type="text" id="input-type" class="input" required list="bicycle-types" placeholder="e.g. Mountain, Road, Gravel, City" />
+            <datalist id="bicycle-types">
+              <option value="Mountain">
+              <option value="Road">
+              <option value="Gravel">
+              <option value="City">
+              <option value="Hybrid">
+              <option value="Electric">
+            </datalist>
+          </div>
+
+          <div class="form-group">
+            <label for="input-price">Price (USD) <span style="color: var(--color-danger)">*</span></label>
+            <input type="number" id="input-price" class="input" min="0" step="0.01" required placeholder="e.g. 799.99" />
+            <p class="form-hint">Must be greater than or equal to 0</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-form" class="btn btn-outline">Cancel</button>
+          <button type="submit" id="btn-submit-form" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bicycle Details Modal -->
+  <div id="view-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Bicycle Details</h3>
+        <button class="btn btn-sm btn-ghost" onclick="document.getElementById('btn-close-view').click()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <span class="detail-label">ID</span>
+          <span id="view-id" class="detail-value font-mono text-xs"></span>
+
+          <span class="detail-label">Name</span>
+          <span id="view-name" class="detail-value font-medium"></span>
+
+          <span class="detail-label">Brand</span>
+          <span id="view-brand" class="detail-value"></span>
+
+          <span class="detail-label">Type</span>
+          <span id="view-type" class="detail-value"></span>
+
+          <span class="detail-label">Price</span>
+          <span id="view-price" class="detail-value font-semibold text-price"></span>
+
+          <span class="detail-label">Created At</span>
+          <span id="view-created-at" class="detail-value text-muted text-xs"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-close-view" class="btn btn-outline">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 style="color: var(--color-danger);">Confirm Deletion</h3>
+        <button class="btn btn-sm btn-ghost" onclick="document.getElementById('btn-cancel-delete').click()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 14px; margin-bottom: 8px;">Are you sure you want to delete this bicycle?</p>
+        <p id="delete-target-name" class="font-medium text-xs" style="color: var(--color-text-muted); background: #f1f5f9; padding: 8px; border-radius: 6px;"></p>
+        <p class="text-xs text-muted" style="margin-top: 10px;">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-delete" class="btn btn-outline">Cancel</button>
+        <button id="btn-confirm-delete" class="btn btn-danger-solid">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

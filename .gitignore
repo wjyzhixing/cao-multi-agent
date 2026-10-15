@@ -1,0 +1,36 @@
+# Dependencies (all project directories)
+node_modules/
+.pnpm-store/
+.npm/
+
+# Build output and caches
+dist/
+build/
+coverage/
+.nyc_output/
+.cache/
+.vite/
+*.tsbuildinfo
+
+# Local environment files; keep shareable templates
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.template
+
+# Logs and process files
+logs/
+*.log
+*.pid
+*.pid.lock
+
+# OS and editor temporary files
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
